@@ -12,7 +12,7 @@ app.get("/", (req, res) => {
 });
 
 // Databse connection
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 // const uri =
 //   "mongodb+srv://SkillHunt:EyTaVrBbPU1Y0iTK@cluster0.ijj1cbi.mongodb.net/?appName=Cluster0";
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ijj1cbi.mongodb.net/?appName=Cluster0`;
@@ -32,16 +32,44 @@ async function run() {
     // creating databse name and collection
     const database = client.db("SkillHunt");
     const jobsCollection = database.collection("jobs");
-
+    // get all the jobs
     app.get("/jobs", async (req, res) => {
       const cursore = jobsCollection.find();
       const result = await cursore.toArray();
       res.send(result);
     });
 
+    // add a job
     app.post("/jobs", async (req, res) => {
       const newjob = req.body;
       const result = await jobsCollection.insertOne(newjob);
+      res.send(result);
+    });
+    // get job by id
+    app.get("/jobs/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await jobsCollection.findOne(query);
+      res.send(result);
+    });
+    // updata a job
+    app.patch("/jobs/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedJob = req.body;
+      const query = { _id: new ObjectId(id) };
+      const update = {
+        $set: {
+          name: updatedJob.name,
+        },
+      };
+      const result = await jobsCollection.updateOne(query, update);
+      res.send(result);
+    });
+    // delte a job
+    app.delete("/jobs/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await jobsCollection.deleteOne(query);
       res.send(result);
     });
 
