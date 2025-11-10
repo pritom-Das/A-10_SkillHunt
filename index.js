@@ -32,17 +32,40 @@ async function run() {
     // creating databse name and collection
     const database = client.db("SkillHunt");
     const jobsCollection = database.collection("jobs");
-    const myjobsCollection = database.collection("My_added_jobs");
+    // const myjobsCollection = database.collection("My_added_jobs");
+    const acceptedJobCollection = database.collection("accepted_jobs");
     // get all the jobs
+    // app.get("/jobs", async (req, res) => {
+    //   const acceptedjobs = await acceptedJobCollection.find().toArray();
+    //   console.log(acceptedjobs);
+    //   const cursore = jobsCollection.find();
+    //   const result = await cursore.toArray();
+    //   res.send(result);
+    // });
     app.get("/jobs", async (req, res) => {
-      const cursore = jobsCollection.find();
-      const result = await cursore.toArray();
-      res.send(result);
+      // get all the acceptedjobs
+      try {
+        const acceptedjobs = await acceptedJobCollection.find().toArray();
+        const acceptedJobIds = acceptedjobs.map(
+          (job) => new ObjectId(job.jobId)
+        );
+        const query = {
+          _id: {
+            $nin: acceptedJobIds,
+          },
+        };
+        const cursor = jobsCollection.find(query);
+        const result = await cursor.toArray();
+        res.send(result);
+      } catch (err) {
+        console.log("there is a error in fatching the data");
+      }
     });
 
     // add a job
     app.post("/jobs", async (req, res) => {
       const newjob = req.body;
+
       const result = await jobsCollection.insertOne(newjob);
       res.send(result);
     });
@@ -80,6 +103,13 @@ async function run() {
       query.postedBy_email = email;
       const cursor = jobsCollection.find(query);
       const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // post accted jobs
+    app.post("/acceptedjobs", async (req, res) => {
+      const accepted_job = req.body;
+      const result = await acceptedJobCollection.insertOne(accepted_job);
       res.send(result);
     });
 
