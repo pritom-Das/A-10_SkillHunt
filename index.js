@@ -32,6 +32,7 @@ async function run() {
     // creating databse name and collection
     const database = client.db("SkillHunt");
     const jobsCollection = database.collection("jobs");
+    const myjobsCollection = database.collection("My_added_jobs");
     // get all the jobs
     app.get("/jobs", async (req, res) => {
       const cursore = jobsCollection.find();
@@ -70,6 +71,15 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await jobsCollection.deleteOne(query);
+      res.send(result);
+    });
+    // my added jobs
+    app.get("/myadded-jobs", async (req, res) => {
+      const email = req.query.email;
+      const query = {};
+      query.postedBy_email = email;
+      const cursor = jobsCollection.find(query);
+      const result = await cursor.toArray();
       res.send(result);
     });
 
