@@ -42,24 +42,32 @@ async function run() {
     //   const result = await cursore.toArray();
     //   res.send(result);
     // });
+    // app.get("/jobs", async (req, res) => {
+    //   // get all the acceptedjobs
+    //   try {
+    //     const acceptedjobs = await acceptedJobCollection.find().toArray();
+    //     const acceptedJobIds = acceptedjobs.map(
+    //       (job) => new ObjectId(job.jobId)
+    //     );
+    //     const query = {
+    //       _id: {
+    //         $nin: acceptedJobIds,
+    //       },
+    //     };
+    //     const cursor = jobsCollection.find(query);
+    //     const result = await cursor.toArray();
+    //     res.send(result);
+    //   } catch (err) {
+    //     console.log("there is a error in fatching the data");
+    //   }
+    // });
+
     app.get("/jobs", async (req, res) => {
-      // get all the acceptedjobs
-      try {
-        const acceptedjobs = await acceptedJobCollection.find().toArray();
-        const acceptedJobIds = acceptedjobs.map(
-          (job) => new ObjectId(job.jobId)
-        );
-        const query = {
-          _id: {
-            $nin: acceptedJobIds,
-          },
-        };
-        const cursor = jobsCollection.find(query);
-        const result = await cursor.toArray();
-        res.send(result);
-      } catch (err) {
-        console.log("there is a error in fatching the data");
-      }
+      const userEmail = req.query.email;
+      const query = { status: "pending", postedBy_email: { $ne: userEmail } };
+      const cursor = jobsCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
     });
 
     // add a job
@@ -83,7 +91,9 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const update = {
         $set: {
-          name: updatedJob.name,
+          status: updatedJob.status,
+          acceptedBy_name: updatedJob.acceptedBy_name,
+          acceptedBy_email: updatedJob.acceptedBy_email,
         },
       };
       const result = await jobsCollection.updateOne(query, update);
@@ -96,6 +106,7 @@ async function run() {
       const result = await jobsCollection.deleteOne(query);
       res.send(result);
     });
+
     // my added jobs
     app.get("/myadded-jobs", async (req, res) => {
       const email = req.query.email;
@@ -107,9 +118,30 @@ async function run() {
     });
 
     // post accted jobs
-    app.post("/acceptedjobs", async (req, res) => {
-      const accepted_job = req.body;
-      const result = await acceptedJobCollection.insertOne(accepted_job);
+    // app.post("/acceptedjobs", async (req, res) => {
+    //   const accepted_job = req.body;
+    //   const result = await acceptedJobCollection.insertOne(accepted_job);
+    //   res.send(result);
+    // });
+
+    app.get("/acceptedjobs", async (req, res) => {
+      const userEmail = req.query.email;
+      const query = { status: "accepted", acceptedBy_email: userEmail };
+
+      const cursor = jobsCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    app.patch("/acceptedjobs/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updatedJob = req.body;
+      const update = {
+        $set: {
+          status: updatedJob.status,
+        },
+      };
+      const result = await jobsCollection.updateOne(query, update);
       res.send(result);
     });
 
